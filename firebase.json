@@ -1,0 +1,1 @@
+{"flutter":{"platforms":{"android":{"default":{"projectId":"chatter-hive","appId":"1:13546972786:android:82ee7b2107a3df7cec84eb","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"chatter-hive","configurations":{"android":"1:13546972786:android:82ee7b2107a3df7cec84eb","web":"1:13546972786:web:bd32f7a4bc25c90bec84eb"}}}}}}
