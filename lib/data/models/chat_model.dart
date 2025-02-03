@@ -1,41 +1,37 @@
-// lib/models/chat_model.dart
 
+import 'package:chatter_hive/data/models/message_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 class Chat {
-  final String chatId;
-  final String chatName;
-  final List<String> users;
-  final String lastMessage;
-  final DateTime lastMessageTime;
+  final String? chatId; // Firestore document ID for the chat
+  final List<String> usersId; // ID of the users
+  final Message? lastMessage; // Preview of the last message
+  final Timestamp? lastUpdated; // Timestamp of the last message
 
   Chat({
-    required this.chatId,
-    required this.chatName,
-    required this.users,
-    required this.lastMessage,
-    required this.lastMessageTime,
+    this.chatId,
+    required this.usersId,
+    this.lastMessage,
+    this.lastUpdated,
   });
 
-  // Factory method to create Chat from Firestore data
-  factory Chat.fromMap(Map<String, dynamic> data) {
+  // Convert Firestore data to a Chat object
+  factory Chat.fromFirestore(DocumentSnapshot chat) {
     return Chat(
-      chatId: data['chat_id'] ?? '',
-      chatName: data['chat_name'] ?? '',
-      users: List<String>.from(data['users'] ?? []),
-      lastMessage: data['last_message'] ?? '',
-      lastMessageTime: (data['last_message_time'] as Timestamp).toDate(),
+      chatId: chat.id,
+      usersId: List<String>.from(chat['usersId']),
+      lastMessage: chat['lastMessage'] != null
+        ? Message.partialFromFirestore(chat['lastMessage'])
+        : null,
+      lastUpdated: chat['lastUpdated']??Timestamp.now(),
     );
   }
 
-  // Method to convert Chat to a map (for saving to Firestore)
-  Map<String, dynamic> toMap() {
+  // Convert a Chat object to Firestore data
+  Map<String, dynamic> toFirestore() {
     return {
-      'chat_id': chatId,
-      'chat_name': chatName,
-      'users': users,
-      'last_message': lastMessage,
-      'last_message_time': lastMessageTime,
+      'usersId': usersId,
+      'lastMessage': lastMessage,
+      'lastUpdated': lastUpdated,
     };
   }
 }

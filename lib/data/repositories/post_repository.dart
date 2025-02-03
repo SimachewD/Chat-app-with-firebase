@@ -13,17 +13,34 @@ class PostRepository {
     }
   }
 
-  // Fetch all posts
-  Future<List<PostModel>> getPosts() async {
+  // Edit post
+  Future<void> editPost(String newCaption, String postId) async {
     try {
-      QuerySnapshot querySnapshot = await _firestore.collection('posts').orderBy('timestamp', descending: true).get();
-      return querySnapshot.docs
-          .map((doc) => PostModel.fromDocument(doc))
-          .toList();
+      // Ensure the post has a valid ID before updating
+      if ( postId.isEmpty) {
+        throw Exception('Post ID is required to edit the post.');
+      }
+
+      // Update the post document in Firestore
+      await _firestore.collection('posts').doc(postId).update({
+        'caption': newCaption
+      });
+      print('Post updated successfully');
     } catch (e) {
-      print('Error fetching posts: $e');
-      return [];
+      print('Error updating post: $e');
     }
+  }
+
+
+  // Fetch all posts
+  Stream<List<PostModel>> getPostsStream() {
+    return FirebaseFirestore.instance
+        .collection('posts')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => PostModel.fromDocument(doc))
+            .toList());
   }
 
   // Delete a post

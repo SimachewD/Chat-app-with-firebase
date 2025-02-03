@@ -16,9 +16,8 @@ class PostProvider with ChangeNotifier {
   List<PostModel> get posts => _posts;
   List<UserModel> get users => _users;
 
-  // Fetch all posts
-  Future<void> fetchPosts() async {
-    _posts = await _postRepository.getPosts();
+  // Fetch all users
+  Future<void> fetchUsers() async {
     _users = (await _authRepository.getUser())!;
     notifyListeners();
   }
@@ -26,14 +25,20 @@ class PostProvider with ChangeNotifier {
   // Create a new post
   Future<void> createPost(PostModel post) async {
     await _postRepository.createPost(post);
-    await fetchPosts(); // Refetch posts to include the new post
+    // await fetchPosts(); // Refetch posts to include the new post
+  }
+
+  // Create a new post
+  Future<void> editPost(String newCaption, String postId) async {
+    await _postRepository.editPost(newCaption, postId);
+    // await fetchPosts(); // Refetch posts to include the new post
   }
 
   // Delete a post
   Future<void> deletePost(String postId) async {
     await _postRepository.deletePost(postId);
-    _posts.removeWhere((post) => post.postId == postId);
-    notifyListeners();
+    // _posts.removeWhere((post) => post.postId == postId);
+    // notifyListeners();
   }
 
   Future<void> toggleLike(
@@ -48,18 +53,18 @@ class PostProvider with ChangeNotifier {
         await postRef.update({
           'likes': FieldValue.arrayRemove([user!.uid]),
         });
-        _posts
-            .firstWhere((post) => post.postId == postId)
-            .likes
-            .remove(user.uid);
-        notifyListeners();
+        // _posts
+        //     .firstWhere((post) => post.postId == postId)
+        //     .likes
+        //     .remove(user.uid);
+        // notifyListeners();
       } else {
         // Add the user to the likes array
         await postRef.update({
           'likes': FieldValue.arrayUnion([user!.uid]),
         });
-        _posts.firstWhere((post) => post.postId == postId).likes.add(user.uid);
-        notifyListeners();
+        // _posts.firstWhere((post) => post.postId == postId).likes.add(user.uid);
+        // notifyListeners();
       }
     } catch (e) {
       debugPrint('Error toggling like: $e');
@@ -67,4 +72,15 @@ class PostProvider with ChangeNotifier {
   }
 
   findPostById(String postId) {}
+
+  Stream<List<PostModel>> getPostsStream() {
+    return _postRepository.getPostsStream();
+  }
+
+  void updatePosts(List<PostModel> newPosts) async{
+    _posts = newPosts;
+    _users = (await _authRepository.getUser())!;
+    notifyListeners();
+  }
+
 }

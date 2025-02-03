@@ -14,19 +14,19 @@ class StatsDisplay extends StatelessWidget {
       children: [
         Column(
           children: [
-            Text('100', style: Theme.of(context).textTheme.bodyLarge),
+            Text('100', style: Theme.of(context).textTheme.bodyMedium),
             const Text('Posts'),
           ],
         ),
         Column(
           children: [
-            Text('200', style: Theme.of(context).textTheme.bodyLarge),
+            Text('200', style: Theme.of(context).textTheme.bodyMedium),
             const Text('Followers'),
           ],
         ),
         Column(
           children: [
-            Text('180', style: Theme.of(context).textTheme.bodyLarge),
+            Text('180', style: Theme.of(context).textTheme.bodyMedium),
             const Text('Following'),
           ],
         ),

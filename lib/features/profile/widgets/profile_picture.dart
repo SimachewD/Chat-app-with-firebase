@@ -8,10 +8,10 @@ class ProfilePicture extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CircleAvatar(
-      radius: 50,
+      radius: 80,
       backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
           ? NetworkImage(imageUrl!)
-          : const AssetImage('assets/images/placeholder.png') as ImageProvider,
+          : const AssetImage('images/profile-icon.jpg') as ImageProvider,
     );
   }
 }

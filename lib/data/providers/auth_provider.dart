@@ -1,4 +1,3 @@
-import 'package:cross_file/src/types/interface.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,37 +7,53 @@ import '../repositories/auth_repository.dart';
 class AuthProvider with ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
   UserModel? _user; // This will be the custom UserModel
+  UserModel? _userWithId; // This will be the custom UserModel
   List<UserModel> _users = []; // This will be the custom UserModel
 
   UserModel? get user => _user;
+  UserModel? get userWithId => _userWithId;
 
   List<UserModel> get users => _users;
 
-  // Fetch all posts
-  Future<void> getUsers() async {
+  // Fetch all users
+  Future<void> getUser() async {
     _users = (await _authRepository.getUser())!;
     notifyListeners();
   }
 
+  // Fetch user by id
+  Future<void> getUserWithId(String userId) async {
+    _userWithId = (await _authRepository.getUserById(userId))!;
+    notifyListeners();
+  }
+
   // Sign in with email and password
-  Future<void> signIn(String email, String password) async {
-    User? firebaseUser =
+  Future<String> signIn(String email, String password) async {
+    final result =
         await _authRepository.signInWithEmailPassword(email, password);
-    if (firebaseUser != null) {
-      _user = UserModel.fromFirebaseUser(firebaseUser); // Convert FirebaseUser to UserModel
+    if (result is User) {
+      _user = UserModel.fromFirebaseUser(
+          result); // Convert FirebaseUser to UserModel
       await _saveLoginState();
       notifyListeners();
+      return 'Login success';
+    } else {
+      return result;
     }
   }
 
   // Register with email and password
-  Future<void> register(String email, String password, String name) async {
-    User? firebaseUser =
+  Future<String> register(String email, String password, String name) async {
+    final result =
         await _authRepository.registerWithEmailPassword(name, email, password);
-    if (firebaseUser != null) {
-      _user = UserModel.fromFirebaseUser(firebaseUser); // Convert FirebaseUser to UserModel
+    if (result is User) {
+      _user = UserModel.fromFirebaseUser(
+          result); // Convert FirebaseUser to UserModel
       await _saveLoginState();
       notifyListeners();
+      return 'Register success';
+    } else {
+      return result;
     }
   }
 
@@ -72,12 +87,16 @@ class AuthProvider with ChangeNotifier {
   Future<void> checkCurrentUser() async {
     User? firebaseUser = _authRepository.getCurrentUser();
     if (firebaseUser != null) {
-      _user = UserModel.fromFirebaseUser(firebaseUser); // Convert FirebaseUser to UserModel
+      _user = UserModel.fromFirebaseUser(
+          firebaseUser); // Convert FirebaseUser to UserModel
     }
     notifyListeners();
   }
 
   resetPassword(String text) {}
 
-  updateProfile({required String name, XFile? profilePicture}) {}
+  updateProfile({required String name}) async {
+    await _authRepository.updateFirebaseUser(name);
+    notifyListeners();
+  }
 }

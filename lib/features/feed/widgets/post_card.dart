@@ -3,6 +3,7 @@ import 'package:chatter_hive/data/models/post_model.dart';
 import 'package:chatter_hive/data/models/user_model.dart';
 import 'package:chatter_hive/data/providers/auth_provider.dart';
 import 'package:chatter_hive/data/providers/comment_provider.dart';
+import 'package:chatter_hive/data/providers/post_provider.dart';
 import 'package:chatter_hive/data/repositories/auth_repository.dart';
 import 'package:chatter_hive/features/feed/widgets/like_button.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +21,8 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool isCommentsExpanded = false;
+  bool isLoading = false;
+  final AuthRepository _authRepository = AuthRepository();
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -27,7 +30,7 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     Provider.of<CommentProvider>(context, listen: false)
         .fetchComments(widget.post.postId!);
-    Provider.of<AuthProvider>(context, listen: false).getUsers();
+    Provider.of<AuthProvider>(context, listen: false).getUser();
   }
 
   @override
@@ -75,10 +78,12 @@ class _PostCardState extends State<PostCard> {
                     if (value == 'edit') {
                       // Show the edit dialog
                       showDialog(
+                        barrierDismissible: false,
                         context: context,
                         builder: (BuildContext context) {
                           // Create a TextEditingController with the existing content
-                          TextEditingController contentController = TextEditingController(text: widget.post.caption);
+                          TextEditingController contentController =
+                              TextEditingController(text: widget.post.caption);
 
                           return AlertDialog(
                             title: const Text('Edit Post'),
@@ -98,20 +103,49 @@ class _PostCardState extends State<PostCard> {
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // Close the dialog
+                                  Navigator.of(context)
+                                      .pop(); // Close the dialog
                                 },
                                 child: const Text('Cancel'),
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  // Handle the save action
-                                  String updatedContent = contentController.text;
-                                  // Perform your update logic here
-                                  print("Updated Post: $updatedContent");
+                               StatefulBuilder(
+                                builder: (context, setState) {
+                                  return TextButton(
+                                    onPressed: !isLoading
+                                        ? () async {
+                                            try {
+                                              setState(() {
+                                                isLoading = true; // start loading
+                                              });
 
-                                  Navigator.of(context).pop(); // Close the dialog
+                                              if (value == 'edit') {
+                                                await Provider.of<PostProvider>(context,
+                                                        listen: false)
+                                                    .editPost(contentController.text, widget.post.postId!);
+                                                contentController.clear();
+                                              } else if (value == 'delete') {
+                                                await Provider.of<PostProvider>(context,
+                                                        listen: false)
+                                                    .deletePost(widget.post.postId!);
+                                              }
+                                            } catch (e) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Error: Try again later')),
+                                              );
+                                            } finally {
+                                              setState(() {
+                                                isLoading = false; // stop loading
+                                              });
+                                            }
+
+                                            Navigator.of(context).pop(); // Close the dialog
+                                          }
+                                        : null,
+                                    child: isLoading
+                                        ? const Text('Updating...') // Show loading state text
+                                        : const Text('Update'), // Normal button text
+                                  );
                                 },
-                                child: const Text('Save'),
                               ),
                             ],
                           );
@@ -120,25 +154,50 @@ class _PostCardState extends State<PostCard> {
                     } else if (value == 'delete') {
                       // Show the delete confirmation dialog
                       showDialog(
+                        barrierDismissible: false,
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
                             title: const Text('Delete Post'),
-                            content: const Text('Are you sure you want to delete this post?'),
+                            content: const Text(
+                                'Are you sure you want to delete this post?'),
                             actions: [
                               TextButton(
                                 onPressed: () {
-                                  Navigator.of(context).pop(); // Close the dialog
+                                  Navigator.of(context)
+                                      .pop(); // Close the dialog
                                 },
                                 child: const Text('Cancel'),
                               ),
-                              TextButton(
-                                onPressed: () {
-                                  // Perform the delete action
-                                  print("Post deleted");
-                                  Navigator.of(context).pop(); // Close the dialog
-                                },
-                                child: const Text('Delete'),
+                              StatefulBuilder(
+                                builder: (context, setState) {
+                                  return TextButton(
+                                    onPressed: isLoading ? null : () async{
+                                      // Perform the delete action
+                                      try {
+                                        setState(() {
+                                          isLoading = true; // start loading
+                                        });
+                                        await Provider.of<PostProvider>(context,
+                                                listen: false)
+                                            .deletePost(widget.post.postId!);
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Error deleting: Try again later')),
+                                        );
+                                      } finally {
+                                        setState(() {
+                                          isLoading = false; // stop loading
+                                        });
+                                      }
+                                      Navigator.of(context)
+                                          .pop(); // Close the dialog
+                                    },
+                                    child: isLoading ? const Text('Deleting...'): const Text('Delete'),
+                                  );
+                                }
                               ),
                             ],
                           );
@@ -147,7 +206,7 @@ class _PostCardState extends State<PostCard> {
                     }
                   },
                   itemBuilder: (BuildContext context) {
-                    return [
+                    return widget.user.uid == _authRepository.getCurrentUser()!.uid ? [
                       const PopupMenuItem(
                         value: 'edit',
                         child: Text('Edit'),
@@ -156,9 +215,9 @@ class _PostCardState extends State<PostCard> {
                         value: 'delete',
                         child: Text('Delete'),
                       ),
-                    ];
+                    ] : [];
                   },
-                  icon: const Icon(Icons.more_vert),
+                  icon: const Icon(Icons.more_vert)
                 )
               ],
             ),
@@ -227,9 +286,8 @@ class _PostCardState extends State<PostCard> {
                       return Container(
                         height: 200,
                         decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.all(Radius.circular(8))
-                        ),
+                            border: Border(bottom: BorderSide(width: 0.5)),
+                            borderRadius: BorderRadius.all(Radius.circular(8))),
                         child: ListView.builder(
                           padding: const EdgeInsets.only(bottom: 60),
                           itemCount: commentProvider

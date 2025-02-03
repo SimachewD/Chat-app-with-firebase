@@ -1,3 +1,4 @@
+import 'package:chatter_hive/features/settings/screens/setting_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:chatter_hive/features/chat/screens/chat_list_screen.dart';
 import 'package:chatter_hive/features/feed/screens/feed_screen.dart';
@@ -18,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
     const FeedScreen(),
     const ChatListScreen(),
     const ProfileScreen(),
+    const SettingScreen(),
   ];
 
   // Handle BottomNavigationBar tap
@@ -32,6 +34,8 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _screens[_selectedIndex],  // Show the selected screen
       bottomNavigationBar: BottomNavigationBar(
+        selectedItemColor: Colors.purple,
+        type: BottomNavigationBarType.fixed, // Prevent shifting behavior
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
@@ -46,6 +50,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
